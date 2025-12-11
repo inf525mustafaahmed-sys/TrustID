@@ -322,6 +322,7 @@ app.post('/admin/toggle-role', (req, res) => { if (req.session.user?.role === 'a
 app.get('/admin.html', (req, res) => { if (req.session.user?.role === 'admin') res.sendFile(path.join(__dirname, 'public/admin.html')); else res.redirect('/login.html'); });
 app.get('/logout', (req, res) => { req.session.destroy(() => res.redirect('/login.html')); });
 
-app.listen(3000, "0.0.0.0", () => {
-  console.log("Server running");
+const port = process.env.PORT || 3000;
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running on port ${port}`);
 });
