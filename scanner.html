@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جهاز البصمة الضوئي</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121826; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        
+        .scanner-container { width: 100%; max-width: 500px; padding: 20px; text-align: center; }
+        
+        #reader { width: 100%; border-radius: 15px; border: 5px solid #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); background: black; }
+        
+        .status-box { margin-top: 20px; padding: 20px; border-radius: 10px; background: #1e293b; min-height: 100px; border: 1px solid #334155; }
+        
+        h1 { color: #38bdf8; margin-bottom: 5px; }
+        p { color: #94a3b8; margin-top: 0; }
+        
+        /* تأثير النجاح */
+        .success { border-color: #4caf50 !important; }
+        .success-text { color: #4caf50; font-size: 20px; font-weight: bold; }
+        
+        /* تأثير الفشل */
+        .error-text { color: #f44336; font-size: 18px; font-weight: bold; }
+
+        .scan-line { width: 100%; height: 2px; background: red; position: absolute; top: 50%; animation: scan 2s infinite; opacity: 0.6; }
+    </style>
+</head>
+<body>
+
+    <div class="scanner-container">
+        <h1>📷 جهاز تسجيل الحضور</h1>
+        <p>ضع رمز QR الخاص بالموظف أمام الكاميرا</p>
+        
+        <div id="reader"></div>
+
+        <div class="status-box" id="resultBox">
+            <span style="font-size: 40px;">⏳</span><br>
+            بانتظار المسح...
+        </div>
+    </div>
+
+    <audio id="beepSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
+
+    <script>
+        let isScanning = true;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (!isScanning) return; // منع التكرار السريع
+
+            // 1. تشغيل الصوت وتأثير بصري
+            document.getElementById('beepSound').play();
+            document.getElementById('reader').style.borderColor = '#4caf50';
+            isScanning = false; // إيقاف المسح مؤقتاً
+
+            // 2. إرسال الكود للسيرفر
+            document.getElementById('resultBox').innerHTML = `<span style="font-size: 40px;">🔄</span><br>جاري المعالجة...`;
+
+            // نستخرج الـ ID من النص (لأننا كتبنا في الباركود: Employee: Name | ID: ...)
+            // سنبحث عن ID داخل النص أو نرسل النص كاملاً والسيرفر يعالجه
+            // في الكود السابق جعلنا الباركود يحتوي على بيانات نصية، الأفضل جعله يحتوي على ID فقط أو استخراج ال ID
+            
+            // ملاحظة: لتحسين الدقة، سأفترض أنك سترسل النص كاملاً والسيرفر يستخرج الـ ID
+            
+            fetch('/api/scan-attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qrData: decodedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('resultBox').innerHTML = `
+                        <span style="font-size: 40px;">✅</span><br>
+                        <span class="success-text">${data.message}</span><br>
+                        ${data.name}
+                    `;
+                } else {
+                    document.getElementById('resultBox').innerHTML = `
+                        <span style="font-size: 40px;">❌</span><br>
+                        <span class="error-text">${data.message}</span>
+                    `;
+                    document.getElementById('reader').style.borderColor = 'red';
+                }
+
+                // إعادة تفعيل المسح بعد 3 ثواني
+                setTimeout(() => {
+                    isScanning = true;
+                    document.getElementById('resultBox').innerHTML = `<span style="font-size: 40px;">⏳</span><br>بانتظار المسح...`;
+                    document.getElementById('reader').style.borderColor = '#38bdf8';
+                }, 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                isScanning = true;
+            });
+        }
+
+        function onScanFailure(error) {
+            // لا نفعل شيئاً عند الفشل العادي (عدم وجود كود)
+        }
+
+        // تشغيل الكاميرا
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: {width: 250, height: 250} }, 
+            /* verbose= */ false);
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>
+</body>
+</html>

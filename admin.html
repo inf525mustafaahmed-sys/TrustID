@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>غرفة القيادة المركزية</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #121826; color: #e2e8f0; }
+        
+        /* Navbar */
+        .navbar { background: #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .brand { font-size: 20px; font-weight: bold; color: #38bdf8; }
+        .logout { color: #f87171; text-decoration: none; border: 1px solid #f87171; padding: 5px 15px; border-radius: 5px; transition: 0.3s; }
+        .logout:hover { background: #f87171; color: white; }
+
+        /* Layout */
+        .container { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; padding: 30px; max-width: 1400px; margin: auto; }
+        .card { background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        
+        /* Stats */
+        .stats-row { grid-column: 1 / -1; display: flex; gap: 20px; margin-bottom: 10px; }
+        .stat-box { background: #334155; flex: 1; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .stat-number { font-size: 32px; font-weight: bold; color: white; }
+        .stat-label { color: #94a3b8; font-size: 14px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: right; color: #94a3b8; font-size: 12px; padding: 10px; border-bottom: 2px solid #334155; }
+        td { padding: 15px 10px; border-bottom: 1px solid #334155; vertical-align: middle; }
+        .table-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge-admin { background: #4f46e5; color: white; }
+        .badge-emp { background: #0f172a; color: #94a3b8; border: 1px solid #334155; }
+
+        /* Buttons */
+        .btn-icon { background: none; border: none; cursor: pointer; font-size: 18px; padding: 5px; border-radius: 5px; color: white; }
+        .btn-icon:hover { background: #334155; }
+        .btn-delete:hover { color: #ef4444; }
+
+        /* Logs */
+        .feed-list { max-height: 500px; overflow-y: auto; }
+        .feed-item { padding: 10px 0; border-bottom: 1px solid #334155; font-size: 13px; animation: fadeIn 0.5s; }
+        .feed-time { color: #64748b; font-size: 11px; }
+        .feed-text { color: #cbd5e1; margin-top: 2px; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand">🛡️ TrustID Admin</div>
+        <a href="/logout" class="logout">تسجيل خروج</a>
+    </div>
+
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-box">
+                <div><div class="stat-number" id="totalUsers">0</div><div class="stat-label">المستخدمين</div></div>
+                <div style="font-size:30px;">👥</div>
+            </div>
+            <div class="stat-box" style="background: #312e81;">
+                <div><div class="stat-number" id="totalAdmins">0</div><div class="stat-label">المدراء</div></div>
+                <div style="font-size:30px;">👑</div>
+            </div>
+            <div class="stat-box" style="background: #064e3b;">
+                <div><div class="stat-number" id="totalEmps">0</div><div class="stat-label">الموظفين</div></div>
+                <div style="font-size:30px;">👮‍♂️</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0; color:#38bdf8;">إدارة المستخدمين</h3>
+            <table>
+                <thead>
+                    <tr><th>الصورة</th><th>المستخدم</th><th>الرتبة</th><th>إجراءات</th></tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0; color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:10px;">📡 رادار النشاطات</h3>
+            <div class="feed-list" id="logsFeed"></div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchAdminData() {
+            try {
+                const response = await fetch('/api/admin/data');
+                if (response.status === 403 || response.status === 401) {
+                    window.location.href = '/login.html'; // طرد إذا لم يكن مديراً
+                    return;
+                }
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) { console.error('Error fetching data:', error); }
+        }
+
+        function updateDashboard(data) {
+            // تحديث الإحصائيات
+            const admins = data.users.filter(u => u.role === 'admin').length;
+            document.getElementById('totalUsers').innerText = data.users.length;
+            document.getElementById('totalAdmins').innerText = admins;
+            document.getElementById('totalEmps').innerText = data.users.length - admins;
+
+            // تحديث جدول المستخدمين
+            const usersHtml = data.users.map(u => `
+                <tr>
+                    <td><img src="${u.profile_image === 'default.png' ? 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' : '/uploads/'+u.profile_image}" class="table-avatar"></td>
+                    <td>
+                        <div style="font-weight:bold;">${u.name}</div>
+                        <div style="font-size:12px; color:#94a3b8;">${u.email}</div>
+                    </td>
+                    <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-emp'}">${u.role === 'admin' ? 'مدير' : 'موظف'}</span></td>
+                    <td>
+                        <form action="/admin/toggle-role" method="POST" style="display:inline;">
+                            <input type="hidden" name="id" value="${u.id}">
+                            <button class="btn-icon" title="تغيير الرتبة">👑</button>
+                        </form>
+                        <form action="/admin/delete" method="POST" style="display:inline;" onsubmit="return confirm('هل أنت متأكد؟');">
+                            <input type="hidden" name="id" value="${u.id}">
+                            <button class="btn-icon btn-delete" title="طرد">🗑️</button>
+                        </form>
+                    </td>
+                </tr>
+            `).join('');
+            document.getElementById('usersTableBody').innerHTML = usersHtml;
+
+            // تحديث السجلات
+            const logsHtml = data.logs.map(l => `
+                <div class="feed-item">
+                    <div class="feed-time">${l.timestamp.split(',')[1]}</div>
+                    <div class="feed-text"><b style="color:white;">${l.email.split('@')[0]}</b>: ${l.action}</div>
+                </div>
+            `).join('');
+            document.getElementById('logsFeed').innerHTML = logsHtml;
+        }
+
+        // تشغيل التحديث فوراً ثم كل 3 ثواني
+        fetchAdminData();
+        setInterval(fetchAdminData, 3000); 
+    </script>
+</body>
+</html>

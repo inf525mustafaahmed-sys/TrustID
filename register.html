@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل موظف جديد</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>📝 تسجيل بيانات موظف جديد</h2>
+        <form action="/register" method="POST" enctype="multipart/form-data">
+            
+            <label>صورة الموظف الشخصية</label>
+            <input type="file" name="photo" accept="image/*" required style="background:white; padding:10px;">
+
+            <label>الاسم الكامل</label>
+            <input type="text" name="name" required placeholder="الاسم...">
+
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" required placeholder="example@gov.iq">
+
+            <label>المسمى الوظيفي</label>
+            <select name="job_title">
+                <option value="ضابط أمن">ضابط أمن</option>
+                <option value="مدير تقني">مدير تقني</option>
+                <option value="إداري">إداري</option>
+            </select>
+
+            <label>القسم</label>
+            <select name="department">
+                <option value="العمليات">العمليات</option>
+                <option value="IT">IT</option>
+                <option value="HR">HR</option>
+            </select>
+
+            <label>وقت الدوام</label>
+            <select name="start_time">
+                <option value="08:00 ص">08:00 ص</option>
+                <option value="02:00 م">02:00 م</option>
+            </select>
+
+            <label>كلمة المرور</label>
+            <input type="password" name="password" required>
+
+            <button type="submit">حفظ وإنشاء ملف</button>
+        </form>
+        <br>
+        <a href="login.html">لديك حساب؟ سجل دخول</a>
+    </div>
+</body>
+</html>
