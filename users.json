@@ -1,0 +1,16 @@
+[
+  {
+    "id": "97ded06b-635a-410d-952d-68fdcb390aba",
+    "name": "mustfa",
+    "email": "admin@EXAMPL.com",
+    "password": "$2b$10$YOmanXUnl.TurJfbfyLoJOuoUkLX3QadfX/ysqyclfmfuqxGY90HO",
+    "role": "employee"
+  },
+  {
+    "id": "988c1507-4a98-4bea-98d3-6141f76ea2f9",
+    "name": "mustfa",
+    "email": "mus@gmail.com",
+    "password": "$2b$10$Wcf1M4YLDNDB6per9V9wJOA17wc24e9tJhBooIje3cYUnlLnMRDmK",
+    "role": "employee"
+  }
+]
